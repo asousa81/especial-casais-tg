@@ -19,10 +19,8 @@ const LINK_PRINCIPAL = {
 // Demais links — adicione quantos quiser, seguindo o mesmo formato
 const LINKS = [
   { icon:"📱", titulo:"App Interativo do Casal", desc:"Jornada pelos 3 alicerces com diagnóstico final", url:"https://especial-casais-tg.vercel.app", cor:"#2F6E78" },
-  { icon:"🖼️", titulo:"Infográfico (resumo visual)", desc:"Imagem para salvar e compartilhar no WhatsApp", url:"https://exemplo.com/infografico", cor:"#5E7B3A" },
-  { icon:"📄", titulo:"Folder / Tríptico (PDF)", desc:"Material de apoio para imprimir e dobrar", url:"https://exemplo.com/triptico", cor:"#B5532A" },
-  { icon:"📖", titulo:"Documento de Apoio Completo", desc:"As 5 portas, autoavaliação e reflexões", url:"https://exemplo.com/documento", cor:"#16314F" },
-  // { icon:"🎥", titulo:"Vídeo da Pregação", desc:"Assista novamente quando quiser", url:"https://youtube.com/...", cor:"#C99A3F" },
+  { icon:"📖", titulo:"Documento de Apoio Completo", desc:"A casa na Rocha", url:"https://construindo-familia-inabalavel.vercel.app/", cor:"#16314F" },
+  
 ];
 // ════════════════════════════════════════════════════════════════════════════
 
