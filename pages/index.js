@@ -43,6 +43,25 @@ const ANAMES   = ["Ouvir com Sensibilidade","Praticar as Bases Diárias","As Pro
 const AKICKERS = ["Alicerce 1 · Ouvir","Alicerce 2 · Praticar","Alicerce 3 · Resistir"];
 const emptyP   = () => ({ lang:null, listenScore:0, scores:[0,0,0,0,0], tempestade:null, response:null, commits:["","",""] });
 
+// ── CLASSIFICAÇÃO DE CADA PRÁTICA (pelos dois escores) ───────────────────────
+// forca:      ambos altos (>=4)            → alicerce firme
+// equilibrar: diferença grande (>=2)       → um pode ajudar o outro
+// crescer:    ambos baixos (<=3 ambos)     → área a desenvolver juntos
+// estavel:    intermediário sem destaque
+function statusPratica(a, b) {
+  const dif = Math.abs(a - b);
+  if (a >= 4 && b >= 4) return "forca";
+  if (dif >= 2)         return "equilibrar";
+  if (a <= 3 && b <= 3) return "crescer";
+  return "estavel";
+}
+const STATUS_TAG = {
+  forca:      { label:"✦ Força",      bg:"oliveLt", color:"olive", border:"olive" },
+  equilibrar: { label:"⚖️ Equilibrar", bg:"goldLt",  color:"gold",  border:"gold"  },
+  crescer:    { label:"↑ Crescer",    bg:"terraLt", color:"terra", border:"terra" },
+  estavel:    { label:null,           bg:null,      color:null,    border:"line"  },
+};
+
 // ── GERADOR LOCAL DE INSIGHTS (sem API) ──────────────────────────────────────
 function gerarInsights(na, nb, data) {
   const langA = LANGS.find(l => l.id === data.a.lang);
@@ -54,6 +73,11 @@ function gerarInsights(na, nb, data) {
 
   const sameLang = data.a.lang === data.b.lang;
   const avgScores = PRACTICES.map((_, i) => (data.a.scores[i] + data.b.scores[i]) / 2);
+  // status de cada prática conforme os DOIS escores (não só a média)
+  const statusList = PRACTICES.map((_, i) => statusPratica(data.a.scores[i], data.b.scores[i]));
+  const forcaIdx     = statusList.findIndex(s => s === "forca");
+  const crescerIdx   = statusList.findIndex(s => s === "crescer");
+  const equilibraIdx = statusList.findIndex(s => s === "equilibrar");
   const bestIdx  = avgScores.indexOf(Math.max(...avgScores));
   const worstIdx = avgScores.indexOf(Math.min(...avgScores));
   const sameTemp = data.a.tempestade === data.b.tempestade;
@@ -76,13 +100,31 @@ function gerarInsights(na, nb, data) {
     : `A escuta é o primeiro alicerce — e ainda há terreno a cavar aqui. Quem constrói na rocha ouve para compreender, não para vencer a discussão (Tiago 1:19). Quando ${na} e ${nb} desacelerarem para ouvir a dor por trás das palavras, esse fundamento ganhará firmeza.`;
 
   // ── Alicerce 2
-  const bestPractice  = PRACTICES[bestIdx];
+  const temForca     = forcaIdx     !== -1;
+  const temEquilibra = equilibraIdx !== -1;
+  const temCrescer   = crescerIdx   !== -1;
+  let a2_titulo, a2_corpo;
+  if (temForca) {
+    a2_titulo = `Força em "${PRACTICES[forcaIdx].toLowerCase()}"`;
+    const extra = temCrescer
+      ? ` Já a área de "${PRACTICES[crescerIdx].toLowerCase()}" pede crescimento dos dois juntos.`
+      : temEquilibra
+        ? ` Em "${PRACTICES[equilibraIdx].toLowerCase()}", um de vocês está mais à frente — uma chance de um ajudar o outro.`
+        : "";
+    a2_corpo = `Os dois demonstram firmeza em "${PRACTICES[forcaIdx].toLowerCase()}" — um alicerce real, porque ambos vivem essa prática.${extra}`;
+  } else if (temEquilibra) {
+    a2_titulo = `Oportunidade de equilíbrio`;
+    a2_corpo = `Em "${PRACTICES[equilibraIdx].toLowerCase()}", há uma diferença entre vocês: um pratica bem mais que o outro. Isso não é falha, é oportunidade — quem está mais firme pode caminhar ao lado do outro, e juntos transformam o desnível em força compartilhada.`;
+  } else {
+    a2_titulo = `Um convite a cavar mais fundo`;
+    a2_corpo  = `As práticas diárias de vocês ainda estão se firmando. ${temCrescer ? `"${PRACTICES[crescerIdx].toLowerCase()}" é onde mais vale começar.` : ""} A boa notícia: vocês estão fazendo isso juntos, e é exatamente o esforço diário e escondido que transforma areia em rocha.`;
+  }
   const worstPractice = PRACTICES[worstIdx];
-  const a2_titulo = `Força em "${bestPractice.toLowerCase()}"`;
-  const a2_corpo  = `O ponto mais forte do casal é "${bestPractice.toLowerCase()}" — uma base sólida. A área que mais pede atenção é "${worstPractice.toLowerCase()}". Trabalhar essa prática juntos, com pequenos gestos diários, pode transformar o clima do lar ao longo do tempo.`;
-  const a2_rocha = praticaMedia >= 4
+  const a2_rocha = (temForca && !temCrescer)
     ? `Cavar fundo é o trabalho invisível que ninguém vê, mas que sustenta tudo o que aparece. ${na} e ${nb} já praticam isso com constância — humildade, misericórdia e pacificação são as marcas de quem edifica na rocha, e não na areia da conveniência.`
-    : `A casa na rocha não se sustenta pela beleza da fachada, mas pelo esforço diário e escondido. Cada vez que ${na} e ${nb} escolherem perdoar, servir e pacificar — especialmente em "${worstPractice.toLowerCase()}" — estarão removendo a areia e firmando o concreto sobre a Rocha.`;
+    : temEquilibra
+      ? `Na casa firmada na rocha, um cônjuge sustenta o outro onde ele é mais fraco. Onde um de vocês já é forte, pode puxar o outro pela mão — e esse equilíbrio mútuo é o concreto que une as pedras do alicerce. "Ajudai-vos uns aos outros a levar as cargas" (Gl 6:2).`
+      : `A casa na rocha não se sustenta pela beleza da fachada, mas pelo esforço diário e escondido. Cada vez que ${na} e ${nb} escolherem perdoar, servir e pacificar juntos, estarão removendo a areia e firmando o concreto sobre a Rocha.`;
 
   // ── Alicerce 3
   const a3_titulo = sameTemp
@@ -103,7 +145,8 @@ function gerarInsights(na, nb, data) {
     `Esta semana, quando surgir uma discussão, um dos dois deve dizer primeiro: "Não quero brigar com você. Quero resolver isso juntos."`,
     `Esta semana, reservem 20 minutos sem telas, sem agenda, sem resolver problemas — só para estar junto e conversar.`,
   ];
-  const acao_semana = acoes[worstIdx] || acoes[4];
+  const acaoIdx = crescerIdx !== -1 ? crescerIdx : (equilibraIdx !== -1 ? equilibraIdx : worstIdx);
+  const acao_semana = acoes[acaoIdx] || acoes[4];
 
   // ── Fechamento
   const fechamentos = {
@@ -232,11 +275,17 @@ export default function App() {
   }
 
   const printStyles = `
+    @media screen { .print-only { display: none !important; } }
     @media print {
       .no-print { display: none !important; }
-      body { background: #fff !important; }
-      .print-area { max-width: 100% !important; }
-      @page { margin: 1.5cm; }
+      .screen-only { display: none !important; }
+      .print-only { display: block !important; }
+      html, body { background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .report { max-width: 100% !important; margin: 0 !important; font-family: Georgia, 'Times New Roman', serif; }
+      .report .rcard { break-inside: avoid; page-break-inside: avoid; }
+      .report .rsection { break-inside: avoid; }
+      .page-break { page-break-before: always; }
+      @page { margin: 1.4cm 1.3cm; }
     }
   `;
 
@@ -418,20 +467,21 @@ export default function App() {
   // S6 ── REVELAÇÃO 2
   if (step===6) {
     const da=data.a.scores, db=data.b.scores;
-    const avgs=PRACTICES.map((_,i)=>(da[i]+db[i])/2);
-    const best=avgs.indexOf(Math.max(...avgs)), worst=avgs.indexOf(Math.min(...avgs));
-    const ins=gerarInsights(na,nb,data);
     return wrap(<>
       <div style={{ marginBottom:12 }}><AlicerceTag idx={1}/><h2 style={{ color:C.olive, fontSize:21, fontWeight:800, margin:"8px 0" }}>Revelação — Práticas</h2></div>
+      <p style={{ fontSize:12, color:C.muted, margin:"0 0 12px", lineHeight:1.5 }}>
+        <b style={{color:C.olive}}>✦ Força</b> = os dois firmes · <b style={{color:C.gold}}>⚖️ Equilibrar</b> = um ajuda o outro · <b style={{color:C.terra}}>↑ Crescer</b> = avançar juntos
+      </p>
       <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
         {PRACTICES.map((pr,i)=>{
-          const isBest=i===best, isWorst=i===worst;
+          const st = statusPratica(da[i], db[i]);
+          const tag = STATUS_TAG[st];
+          const borderColor = st==="forca"?C.olive : st==="equilibrar"?C.gold : st==="crescer"?C.terra : C.line;
           return (
-            <Card key={i} style={{ borderLeft:`4px solid ${isBest?C.olive:isWorst?C.terra:C.line}`, padding:"10px 14px" }}>
+            <Card key={i} style={{ borderLeft:`4px solid ${borderColor}`, padding:"10px 14px" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
                 <span style={{ fontSize:12, fontWeight:600, color:C.ink, flex:1, paddingRight:8, lineHeight:1.3 }}>{pr}</span>
-                {isBest&&<span style={{ fontSize:10, background:C.oliveLt, color:C.olive, padding:"2px 7px", borderRadius:8, fontWeight:700, flexShrink:0 }}>✦ Força</span>}
-                {isWorst&&<span style={{ fontSize:10, background:C.terraLt, color:C.terra, padding:"2px 7px", borderRadius:8, fontWeight:700, flexShrink:0 }}>↑ Crescer</span>}
+                {tag.label && <span style={{ fontSize:10, background:C[tag.bg], color:C[tag.color], padding:"2px 7px", borderRadius:8, fontWeight:700, flexShrink:0 }}>{tag.label}</span>}
               </div>
               {[[na,da[i],C.navy],[nb,db[i],C.olive]].map(([nm,val,col])=>(
                 <div key={nm} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
@@ -446,7 +496,7 @@ export default function App() {
           );
         })}
       </div>
-      <RochaBox idx={1} texto={ins.a2_rocha}/>
+      <RochaBox idx={1} texto={gerarInsights(na,nb,data).a2_rocha}/>
       <div style={{ marginTop:18 }}>
         <Btn color={C.olive} onClick={()=>goNext({to:na,color:C.terra,sub:"Último alicerce — sobre como vocês enfrentam as provas do tempo."})}>Continuar para o Alicerce 3 →</Btn>
       </div>
@@ -620,69 +670,218 @@ export default function App() {
     <Btn onClick={()=>goNext(null)}>Selar os compromissos →</Btn>
   </>);
 
-  // S12 ── FINAL + IMPRIMIR
-  if (step===12) return (
-    <>
-      <Head><title>Família Inabalável · IEQ Templo Gospel</title></Head>
-      <style>{printStyles}</style>
-      <div className="print-area" style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.cream }}>
-        {/* Cabeçalho do relatório */}
-        <div style={{ background:C.navy, padding:"24px 24px 22px", textAlign:"center" }}>
-          <div style={{ fontSize:40, marginBottom:8 }}>🏠</div>
-          <div style={{ color:"#7FA0BC", fontSize:11, letterSpacing:".18em", textTransform:"uppercase", marginBottom:6 }}>Relatório do Casal</div>
-          <h1 style={{ color:"#fff", fontSize:26, fontWeight:800, margin:"0 0 10px", lineHeight:1.15 }}>{na} & {nb}</h1>
-          <div style={{ display:"flex", width:160, height:5, borderRadius:3, overflow:"hidden", margin:"0 auto" }}>
-            {AC.map((c,i)=><div key={i} style={{ flex:1, background:c }}/>)}
+  // S12 ── FINAL: TELA (resumo) + RELATÓRIO COMPLETO (impressão)
+  if (step===12) {
+    const ta=TEMPESTADES.find(t=>t.id===data.a.tempestade), tb=TEMPESTADES.find(t=>t.id===data.b.tempestade);
+    const ra=RESPONSES.find(r=>r.id===data.a.response), rb=RESPONSES.find(r=>r.id===data.b.response);
+    const la=LANGS.find(l=>l.id===data.a.lang), lb=LANGS.find(l=>l.id===data.b.lang);
+    const hoje = new Date().toLocaleDateString("pt-BR", { day:"2-digit", month:"long", year:"numeric" });
+
+    // estilos reutilizáveis do relatório impresso
+    const RT = {
+      h: { color:C.navy, fontSize:17, fontWeight:700, margin:"0 0 8px", borderBottom:`2px solid ${C.gold}`, paddingBottom:5 },
+      p: { fontSize:12.5, color:C.ink, lineHeight:1.55, margin:"0 0 8px" },
+      tag:(idx)=>({ display:"inline-block", padding:"2px 9px", borderRadius:14, background:ACL[idx], color:AC[idx], fontSize:10, fontWeight:700, letterSpacing:".08em", textTransform:"uppercase", marginBottom:6 }),
+    };
+
+    return (
+      <>
+        <Head><title>Família Inabalável · IEQ Templo Gospel</title></Head>
+        <style>{printStyles}</style>
+
+        {/* ══════════ TELA (não imprime) ══════════ */}
+        <div className="screen-only print-area" style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.cream }}>
+          <div style={{ background:C.navy, padding:"24px 24px 22px", textAlign:"center" }}>
+            <div style={{ fontSize:40, marginBottom:8 }}>🏠</div>
+            <div style={{ color:"#7FA0BC", fontSize:11, letterSpacing:".18em", textTransform:"uppercase", marginBottom:6 }}>Relatório do Casal</div>
+            <h1 style={{ color:"#fff", fontSize:26, fontWeight:800, margin:"0 0 10px", lineHeight:1.15 }}>{na} & {nb}</h1>
+            <div style={{ display:"flex", width:160, height:5, borderRadius:3, overflow:"hidden", margin:"0 auto" }}>
+              {AC.map((c,i)=><div key={i} style={{ flex:1, background:c }}/>)}
+            </div>
+          </div>
+          <div style={{ padding:"18px 16px 40px" }}>
+            {insights && (
+              <Card style={{ textAlign:"center", marginBottom:14, borderTop:`5px solid ${insights.nivelCor}` }}>
+                <div style={{ display:"inline-block", padding:"6px 18px", borderRadius:20, background:insights.nivelCor, color:"#fff", fontWeight:700, fontSize:15, marginBottom:8 }}>
+                  {insights.nivel} · {insights.solidez}%
+                </div>
+                <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>{insights.nivelDesc}</p>
+              </Card>
+            )}
+            {insights?.fechamento && (
+              <Card style={{ marginBottom:14, background:C.navyLt, borderColor:C.navy }}>
+                <p style={{ fontSize:14, color:C.navy, fontStyle:"italic", margin:"0 0 8px", lineHeight:1.6 }}>{insights.fechamento}</p>
+                <p style={{ fontSize:11, color:C.gold, margin:0, textAlign:"right", fontWeight:700 }}>Mateus 7:25</p>
+              </Card>
+            )}
+            {data.a.commits.some(c=>c) && (
+              <div style={{ marginBottom:14 }}>
+                <p style={{ fontWeight:700, fontSize:14, color:C.navy, margin:"0 0 10px" }}>📝 Nossos compromissos</p>
+                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                  {[0,1,2].map(i=>data.a.commits[i]?(
+                    <Card key={i} style={{ borderLeft:`4px solid ${AC[i]}`, padding:"12px 14px" }}>
+                      <div style={{ fontSize:10, color:AC[i], fontWeight:700, marginBottom:4, letterSpacing:".08em", textTransform:"uppercase" }}>{AKICKERS[i]}</div>
+                      <div style={{ fontSize:13, color:C.ink, lineHeight:1.4 }}>{data.a.commits[i]}</div>
+                    </Card>
+                  ):null)}
+                </div>
+              </div>
+            )}
+            <Card style={{ background:C.goldLt, borderColor:C.gold, marginBottom:18, textAlign:"center" }}>
+              <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>
+                📄 O botão abaixo gera um <b>relatório completo</b> com toda a análise para guardar ou imprimir.
+              </p>
+            </Card>
+            <div className="no-print" style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <Btn color={C.olive} onClick={()=>window.print()}>🖨️ Gerar relatório completo (PDF)</Btn>
+              <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""});}} style={{ width:"100%", padding:"14px", borderRadius:12, border:`2px solid ${C.line}`, background:"transparent", color:C.muted, fontSize:14, cursor:"pointer", fontWeight:700 }}>↩ Refazer com outro casal</button>
+            </div>
           </div>
         </div>
 
-        <div style={{ padding:"18px 16px 40px" }}>
-          {/* Selo de solidez */}
-          {insights && (
-            <Card style={{ textAlign:"center", marginBottom:14, borderTop:`5px solid ${insights.nivelCor}` }}>
-              <div style={{ display:"inline-block", padding:"6px 18px", borderRadius:20, background:insights.nivelCor, color:"#fff", fontWeight:700, fontSize:15, marginBottom:8 }}>
-                {insights.nivel} · {insights.solidez}%
+        {/* ══════════ RELATÓRIO COMPLETO (só impressão) ══════════ */}
+        {insights && (
+        <div className="print-only report" style={{ color:C.ink }}>
+
+          {/* CAPA / CABEÇALHO */}
+          <div style={{ textAlign:"center", borderBottom:`3px solid ${C.navy}`, paddingBottom:14, marginBottom:16 }}>
+            <div style={{ fontSize:11, letterSpacing:".22em", color:C.muted, textTransform:"uppercase", marginBottom:6 }}>IEQ Templo Gospel · Palestra para Casais</div>
+            <div style={{ fontSize:24, fontWeight:700, color:C.navy, lineHeight:1.1 }}>Construindo uma Família Inabalável</div>
+            <div style={{ fontSize:13, color:C.muted, fontStyle:"italic", marginTop:4 }}>Diagnóstico do casal · Mateus 7:24-27</div>
+            <div style={{ display:"flex", justifyContent:"center", gap:6, margin:"12px 0 8px" }}>
+              {AC.map((c,i)=><div key={i} style={{ width:50, height:4, borderRadius:2, background:c }}/>)}
+            </div>
+            <div style={{ fontSize:18, fontWeight:700, color:C.ink }}>{na} &amp; {nb}</div>
+            <div style={{ fontSize:11, color:C.muted, marginTop:2 }}>{hoje}</div>
+          </div>
+
+          {/* DIAGNÓSTICO GERAL */}
+          <div className="rsection" style={{ marginBottom:18 }}>
+            <h2 style={RT.h}>Diagnóstico Geral</h2>
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:10 }}>
+              <div style={{ textAlign:"center", minWidth:90 }}>
+                <div style={{ fontSize:34, fontWeight:800, color:insights.nivelCor, lineHeight:1 }}>{insights.solidez}%</div>
+                <div style={{ fontSize:9, color:C.muted, letterSpacing:".06em", marginTop:2 }}>SOLIDEZ</div>
               </div>
-              <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>{insights.nivelDesc}</p>
-            </Card>
-          )}
+              <div style={{ flex:1 }}>
+                <div style={{ display:"inline-block", padding:"3px 12px", borderRadius:14, background:insights.nivelCor, color:"#fff", fontWeight:700, fontSize:12, marginBottom:6 }}>{insights.nivel}</div>
+                <div style={{ height:8, borderRadius:4, background:C.line, overflow:"hidden" }}>
+                  <div style={{ height:"100%", borderRadius:4, background:insights.nivelCor, width:`${insights.solidez}%` }}/>
+                </div>
+              </div>
+            </div>
+            <p style={RT.p}>{insights.nivelDesc}</p>
+            {/* Barras dos 3 alicerces */}
+            <div style={{ marginTop:10 }}>
+              {[
+                { idx:0, val:insights.escutaMedia,      label:"Ouvir com Sensibilidade" },
+                { idx:1, val:insights.praticaMedia,     label:"Praticar as Bases Diárias" },
+                { idx:2, val:insights.resilienciaMedia, label:"Resistir às Provas do Tempo" },
+              ].map(({idx,val,label})=>(
+                <div key={idx} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                  <span style={{ fontSize:11, fontWeight:700, color:AC[idx], width:150, flexShrink:0 }}>{label}</span>
+                  <div style={{ flex:1, height:9, borderRadius:4, background:C.line, overflow:"hidden" }}>
+                    <div style={{ height:"100%", borderRadius:4, background:AC[idx], width:`${(val/5)*100}%` }}/>
+                  </div>
+                  <span style={{ fontSize:12, fontWeight:700, color:AC[idx], width:30, textAlign:"right", flexShrink:0 }}>{val.toFixed(1)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          {/* Versículo de fechamento */}
-          {insights?.fechamento && (
-            <Card style={{ marginBottom:14, background:C.navyLt, borderColor:C.navy }}>
-              <p style={{ fontSize:14, color:C.navy, fontStyle:"italic", margin:"0 0 8px", lineHeight:1.6 }}>{insights.fechamento}</p>
-              <p style={{ fontSize:11, color:C.gold, margin:0, textAlign:"right", fontWeight:700 }}>Mateus 7:25</p>
-            </Card>
-          )}
+          {/* ALICERCE 1 */}
+          <div className="rsection rcard" style={{ marginBottom:14, border:`1px solid ${C.line}`, borderLeft:`5px solid ${AC[0]}`, borderRadius:8, padding:"12px 14px" }}>
+            <div style={RT.tag(0)}>{AKICKERS[0]}</div>
+            <h3 style={{ fontSize:15, fontWeight:700, color:C.ink, margin:"0 0 8px" }}>Ouvir com Sensibilidade</h3>
+            <div style={{ display:"flex", gap:16, marginBottom:8, fontSize:11.5 }}>
+              <div><b>{na}:</b> {la?.label} · escuta {data.a.listenScore}/5</div>
+              <div><b>{nb}:</b> {lb?.label} · escuta {data.b.listenScore}/5</div>
+            </div>
+            <p style={RT.p}><b style={{color:AC[0]}}>{insights.a1_titulo}.</b> {insights.a1_corpo}</p>
+            <p style={{ ...RT.p, background:ACL[0], padding:"8px 10px", borderRadius:6, margin:0 }}>⛰️ <b>Na Rocha:</b> {insights.a1_rocha}</p>
+          </div>
 
-          {/* Compromissos */}
+          {/* ALICERCE 2 */}
+          <div className="rsection rcard" style={{ marginBottom:14, border:`1px solid ${C.line}`, borderLeft:`5px solid ${AC[1]}`, borderRadius:8, padding:"12px 14px" }}>
+            <div style={RT.tag(1)}>{AKICKERS[1]}</div>
+            <h3 style={{ fontSize:15, fontWeight:700, color:C.ink, margin:"0 0 8px" }}>Praticar as Bases Diárias</h3>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11, marginBottom:8 }}>
+              <thead>
+                <tr style={{ color:C.muted }}>
+                  <th style={{ textAlign:"left", padding:"2px 4px", fontWeight:600 }}>Prática</th>
+                  <th style={{ padding:"2px 4px", fontWeight:600 }}>{na}</th>
+                  <th style={{ padding:"2px 4px", fontWeight:600 }}>{nb}</th>
+                  <th style={{ textAlign:"right", padding:"2px 4px", fontWeight:600 }}>Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {PRACTICES.map((pr,i)=>{
+                  const st=statusPratica(data.a.scores[i], data.b.scores[i]); const tag=STATUS_TAG[st];
+                  return (
+                    <tr key={i} style={{ borderTop:`1px solid ${C.line}` }}>
+                      <td style={{ padding:"4px", color:C.ink }}>{pr}</td>
+                      <td style={{ padding:"4px", textAlign:"center", fontWeight:700, color:C.navy }}>{data.a.scores[i]}</td>
+                      <td style={{ padding:"4px", textAlign:"center", fontWeight:700, color:AC[1] }}>{data.b.scores[i]}</td>
+                      <td style={{ padding:"4px", textAlign:"right", fontWeight:700, color: tag.color?C[tag.color]:C.muted, fontSize:10 }}>{tag.label||"—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p style={RT.p}><b style={{color:AC[1]}}>{insights.a2_titulo}.</b> {insights.a2_corpo}</p>
+            <p style={{ ...RT.p, background:ACL[1], padding:"8px 10px", borderRadius:6, margin:0 }}>⛰️ <b>Na Rocha:</b> {insights.a2_rocha}</p>
+          </div>
+
+          {/* ALICERCE 3 */}
+          <div className="rsection rcard" style={{ marginBottom:14, border:`1px solid ${C.line}`, borderLeft:`5px solid ${AC[2]}`, borderRadius:8, padding:"12px 14px" }}>
+            <div style={RT.tag(2)}>{AKICKERS[2]}</div>
+            <h3 style={{ fontSize:15, fontWeight:700, color:C.ink, margin:"0 0 8px" }}>As Provas do Tempo</h3>
+            <div style={{ display:"flex", gap:16, marginBottom:8, fontSize:11.5 }}>
+              <div><b>{na}:</b> {ta?.label} · {ra?.label}</div>
+              <div><b>{nb}:</b> {tb?.label} · {rb?.label}</div>
+            </div>
+            <p style={RT.p}><b style={{color:AC[2]}}>{insights.a3_titulo}.</b> {insights.a3_corpo}</p>
+            <p style={{ ...RT.p, background:ACL[2], padding:"8px 10px", borderRadius:6, margin:0 }}>⛰️ <b>Na Rocha:</b> {insights.a3_rocha}</p>
+          </div>
+
+          {/* AÇÃO DA SEMANA */}
+          <div className="rsection" style={{ background:C.goldLt, border:`1px solid ${C.gold}`, borderRadius:8, padding:"12px 14px", marginBottom:14 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:"#9A6B12", marginBottom:4 }}>🎯 Primeiro passo desta semana</div>
+            <p style={{ ...RT.p, margin:0 }}>{insights.acao_semana}</p>
+          </div>
+
+          {/* COMPROMISSOS */}
           {data.a.commits.some(c=>c) && (
-            <div style={{ marginBottom:14 }}>
-              <p style={{ fontWeight:700, fontSize:14, color:C.navy, margin:"0 0 10px" }}>📝 Nossos compromissos</p>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {[0,1,2].map(i=>data.a.commits[i]?(
-                  <Card key={i} style={{ borderLeft:`4px solid ${AC[i]}`, padding:"12px 14px" }}>
-                    <div style={{ fontSize:10, color:AC[i], fontWeight:700, marginBottom:4, letterSpacing:".08em", textTransform:"uppercase" }}>{AKICKERS[i]}</div>
-                    <div style={{ fontSize:13, color:C.ink, lineHeight:1.4 }}>{data.a.commits[i]}</div>
-                  </Card>
-                ):null)}
+            <div className="rsection" style={{ marginBottom:14 }}>
+              <h2 style={RT.h}>Nossos Compromissos</h2>
+              {[0,1,2].map(i=>data.a.commits[i]?(
+                <div key={i} style={{ borderLeft:`4px solid ${AC[i]}`, paddingLeft:10, marginBottom:8 }}>
+                  <div style={{ fontSize:10, color:AC[i], fontWeight:700, letterSpacing:".06em", textTransform:"uppercase" }}>{ANAMES[i]}</div>
+                  <div style={{ fontSize:12.5, color:C.ink, lineHeight:1.4 }}>{data.a.commits[i]}</div>
+                </div>
+              ):null)}
+              {/* Linhas para assinatura */}
+              <div style={{ display:"flex", gap:30, marginTop:18 }}>
+                {[na,nb].map((nm,i)=>(
+                  <div key={i} style={{ flex:1, textAlign:"center" }}>
+                    <div style={{ borderTop:`1px solid ${C.ink}`, paddingTop:4, fontSize:11, color:C.muted }}>{nm}</div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          <p style={{ color:C.muted, fontSize:12, lineHeight:1.5, margin:"4px 0 20px", textAlign:"center" }}>
-            IEQ Templo Gospel · Especial dos Namorados<br/>Construindo uma Família Inabalável · Mateus 7:24-27
-          </p>
-
-          {/* Botões — escondidos na impressão */}
-          <div className="no-print" style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            <Btn color={C.olive} onClick={()=>window.print()}>🖨️ Imprimir / Salvar em PDF</Btn>
-            <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""});}} style={{ width:"100%", padding:"14px", borderRadius:12, border:`2px solid ${C.line}`, background:"transparent", color:C.muted, fontSize:14, cursor:"pointer", fontWeight:700 }}>↩ Refazer com outro casal</button>
+          {/* VERSÍCULO DE FECHAMENTO */}
+          <div className="rsection" style={{ textAlign:"center", borderTop:`2px solid ${C.gold}`, paddingTop:14, marginTop:6 }}>
+            <p style={{ fontSize:13, fontStyle:"italic", color:C.navy, lineHeight:1.6, margin:"0 0 6px" }}>{insights.fechamento}</p>
+            <p style={{ fontSize:11, color:C.muted, margin:0 }}>«Quem ouve minhas palavras e as pratica é tão sábio como a pessoa que constrói sua casa sobre uma rocha firme.» — Mateus 7:24-25</p>
+            <p style={{ fontSize:10, color:C.muted, marginTop:12, letterSpacing:".06em" }}>IEQ TEMPLO GOSPEL · Especial dos Namorados</p>
           </div>
         </div>
-      </div>
-    </>
-  );
+        )}
+      </>
+    );
+  }
 
   return null;
 }
