@@ -57,28 +57,43 @@ function gerarInsights(na, nb, data) {
   const bestIdx  = avgScores.indexOf(Math.max(...avgScores));
   const worstIdx = avgScores.indexOf(Math.min(...avgScores));
   const sameTemp = data.a.tempestade === data.b.tempestade;
+  const escutaMedia = (data.a.listenScore + data.b.listenScore) / 2;
+  const praticaMedia = avgScores.reduce((a,b)=>a+b,0) / avgScores.length;
+
+  // respostas resilientes (aproximar / resistência alegre) contam pontos
+  const respScore = (id) => (id === "j" ? 5 : id === "a" ? 4 : id === "e" ? 3 : id === "c" ? 2 : 1);
+  const resilienciaMedia = (respScore(data.a.response) + respScore(data.b.response)) / 2;
 
   // ── Alicerce 1
   const a1_titulo = sameLang
     ? "Uma linguagem em comum — um presente a cultivar"
     : "Duas linguagens, uma oportunidade de conexão";
   const a1_corpo = sameLang
-    ? `${na} e ${nb} compartilham a mesma linguagem de amor: ${langA?.label}. Isso é uma dádiva — vocês já falam a língua um do outro. O desafio agora é exercê-la com intencionalidade nos dias de rotina e cansaço, não apenas nos momentos especiais.`
+    ? `${na} e ${nb} compartilham a mesma linguagem de amor: ${langA?.label}. Vocês já falam a língua um do outro. O desafio agora é exercê-la com intencionalidade nos dias de rotina e cansaço, não apenas nos momentos especiais.`
     : `${na} se sente amado(a) através de ${langA?.label?.toLowerCase()}, enquanto ${nb} se sente amado(a) através de ${langB?.label?.toLowerCase()}. O que é amor para um pode passar despercebido pelo outro. Agora que vocês sabem, podem amar de uma forma que o outro realmente recebe.`;
+  const a1_rocha = escutaMedia >= 4
+    ? `Casais que ouvem de verdade constroem sobre a rocha do diálogo. ${na} e ${nb} já demonstram essa escuta — é o primeiro alicerce sendo cavado fundo. Ouvir a Deus pela Palavra e ouvir um ao outro com atenção genuína é o que sustenta o lar quando as palavras ficam difíceis.`
+    : `A escuta é o primeiro alicerce — e ainda há terreno a cavar aqui. Quem constrói na rocha ouve para compreender, não para vencer a discussão (Tiago 1:19). Quando ${na} e ${nb} desacelerarem para ouvir a dor por trás das palavras, esse fundamento ganhará firmeza.`;
 
   // ── Alicerce 2
   const bestPractice  = PRACTICES[bestIdx];
   const worstPractice = PRACTICES[worstIdx];
   const a2_titulo = `Força em "${bestPractice.toLowerCase()}"`;
   const a2_corpo  = `O ponto mais forte do casal é "${bestPractice.toLowerCase()}" — uma base sólida. A área que mais pede atenção é "${worstPractice.toLowerCase()}". Trabalhar essa prática juntos, com pequenos gestos diários, pode transformar o clima do lar ao longo do tempo.`;
+  const a2_rocha = praticaMedia >= 4
+    ? `Cavar fundo é o trabalho invisível que ninguém vê, mas que sustenta tudo o que aparece. ${na} e ${nb} já praticam isso com constância — humildade, misericórdia e pacificação são as marcas de quem edifica na rocha, e não na areia da conveniência.`
+    : `A casa na rocha não se sustenta pela beleza da fachada, mas pelo esforço diário e escondido. Cada vez que ${na} e ${nb} escolherem perdoar, servir e pacificar — especialmente em "${worstPractice.toLowerCase()}" — estarão removendo a areia e firmando o concreto sobre a Rocha.`;
 
   // ── Alicerce 3
   const a3_titulo = sameTemp
     ? "Ambos reconhecem o mesmo tipo de desafio"
     : "Percepções diferentes — força complementar";
   const a3_corpo = sameTemp
-    ? `${na} e ${nb} identificam as mesmas tempestades: ${tempA?.label?.toLowerCase()}. O casal que nomeia seus desafios junto já está construindo sobre a rocha. A questão não é se a chuva virá, mas se o alicerce estará firme. E vocês já estão cuidando dele.`
-    : `${na} sente mais os desafios ${tempA?.label?.toLowerCase()} e ${nb} os ${tempB?.label?.toLowerCase()}. Essa diferença pode se tornar uma força — cada um alerta o outro para o que o outro talvez não veja chegar. Juntos, o campo de visão é maior.`;
+    ? `${na} e ${nb} identificam as mesmas tempestades: ${tempA?.label?.toLowerCase()}. O casal que nomeia seus desafios junto já está construindo sobre a rocha. A questão não é se a chuva virá, mas se o alicerce estará firme.`
+    : `${na} sente mais os desafios ${tempA?.label?.toLowerCase()} e ${nb} os ${tempB?.label?.toLowerCase()}. Essa diferença pode se tornar uma força — cada um alerta o outro para o que talvez não veja chegar. Juntos, o campo de visão é maior.`;
+  const a3_rocha = resilienciaMedia >= 4
+    ? `A mesma chuva cai sobre as duas casas — a diferença está no alicerce. ${na} e ${nb} já reagem às crises se voltando um para o outro, e essa é a marca da casa firmada na Rocha. A tempestade testa, mas não derruba quem permanece em Cristo.`
+    : `Jesus não promete um lar sem tempestades, mas um lar que não desmorona quando elas vêm. Quando o instinto de ${na} e ${nb} for recuar ou explodir, lembrar de se aproximar — e clamar à Rocha Eterna — transformará cada crise em oportunidade de firmar ainda mais o fundamento.`;
 
   // ── Ação da semana baseada na prática mais fraca
   const acoes = [
@@ -98,19 +113,49 @@ function gerarInsights(na, nb, data) {
     a: `${na} e ${nb}, o instinto de se aproximar nas tempestades é exatamente o que a Rocha pede. Continuem se voltando um para o outro — e para Cristo — quando o vento soprar forte.`,
     j: `${na} e ${nb}, a resistência alegre que vocês demonstram é o sinal de um alicerce que já está sendo construído na Rocha. «...ela não cairá, pois foi construída sobre rocha firme.» — Mateus 7:25`,
   };
-
-  // usa a resposta mais frequente entre os dois para o fechamento
-  const respId = data.a.response === data.b.response
-    ? data.a.response
-    : data.a.response || data.b.response;
+  const respId = data.a.response === data.b.response ? data.a.response : (data.a.response || data.b.response);
   const fechamento = fechamentos[respId] || `${na} e ${nb}, que Cristo, a Rocha Eterna, seja o fundamento de cada decisão do lar de vocês. Ele sustenta o que o vento mais forte não consegue derrubar. — Mateus 7:25`;
 
-  return { a1_titulo, a1_corpo, a2_titulo, a2_corpo, a3_titulo, a3_corpo, acao_semana, fechamento };
+  // ── DIAGNÓSTICO GERAL (consolidado)
+  const solidez = Math.round(((escutaMedia + praticaMedia + resilienciaMedia) / 15) * 100);
+  let nivel, nivelDesc, nivelCor;
+  if (solidez >= 80) {
+    nivel = "Casa firmada na Rocha";
+    nivelCor = C.olive;
+    nivelDesc = `${na} e ${nb}, o lar de vocês demonstra um alicerce sólido nos três fundamentos. Vocês ouvem, praticam e resistem juntos. Continuem cavando fundo — a casa que vocês constroem resistirá às tempestades porque está sobre a Rocha que é Cristo.`;
+  } else if (solidez >= 55) {
+    nivel = "Alicerce em formação";
+    nivelCor = C.gold;
+    nivelDesc = `${na} e ${nb}, vocês já lançaram bons fundamentos, mas há áreas onde a areia ainda precisa dar lugar à rocha. O trabalho diário e intencional nos pontos mais frágeis transformará esse alicerce em algo inabalável. Vocês estão no caminho certo.`;
+  } else {
+    nivel = "Terreno a firmar";
+    nivelCor = C.terra;
+    nivelDesc = `${na} e ${nb}, este é um convite — não uma condenação. Toda casa firme começou com terreno a cavar. Há áreas importantes para fortalecer nos três alicerces, e o simples fato de estarem fazendo isso juntos já é o primeiro passo para sair da areia rumo à Rocha.`;
+  }
+
+  return {
+    a1_titulo, a1_corpo, a1_rocha,
+    a2_titulo, a2_corpo, a2_rocha,
+    a3_titulo, a3_corpo, a3_rocha,
+    acao_semana, fechamento,
+    solidez, nivel, nivelDesc, nivelCor,
+    escutaMedia, praticaMedia, resilienciaMedia,
+  };
 }
 
 // ── UI ATOMS ─────────────────────────────────────────────────────────────────
 function AlicerceTag({ idx }) {
   return <span style={{ display:"inline-block", padding:"3px 10px", borderRadius:20, background:ACL[idx], color:AC[idx], fontSize:11, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase" }}>{AKICKERS[idx]}</span>;
+}
+function RochaBox({ idx, texto }) {
+  return (
+    <Card style={{ background:ACL[idx], borderColor:AC[idx], marginTop:10 }}>
+      <p style={{ fontWeight:700, fontSize:13, color:AC[idx], margin:"0 0 6px", display:"flex", alignItems:"center", gap:6 }}>
+        <span>⛰️</span> Como isso firma a casa na Rocha
+      </p>
+      <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>{texto}</p>
+    </Card>
+  );
 }
 function ScoreDots({ value, onChange, color }) {
   return (
@@ -145,7 +190,7 @@ function Card({ children, style={} }) {
 function ProgressBar({ step, total }) {
   const pct = Math.round((step/(total-1))*100);
   return (
-    <div style={{ padding:"10px 20px 0" }}>
+    <div className="no-print" style={{ padding:"10px 20px 0" }}>
       <div style={{ height:4, borderRadius:2, background:C.line, overflow:"hidden" }}>
         <div style={{ height:"100%", borderRadius:2, background:C.gold, width:`${pct}%`, transition:"width .4s" }}/>
       </div>
@@ -182,10 +227,18 @@ export default function App() {
   const confirmPass = () => { setPass(null); setStep(s=>s+1); };
 
   function concluirAlicerce3() {
-    const resultado = gerarInsights(na, nb, data);
-    setInsights(resultado);
+    setInsights(gerarInsights(na, nb, data));
     setStep(9);
   }
+
+  const printStyles = `
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff !important; }
+      .print-area { max-width: 100% !important; }
+      @page { margin: 1.5cm; }
+    }
+  `;
 
   if (pass) return (
     <div style={{ minHeight:"100vh", background:pass.color, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32, fontFamily:"system-ui,sans-serif" }}>
@@ -200,7 +253,8 @@ export default function App() {
   const wrap = (children, noP) => (
     <>
       <Head><title>Família Inabalável · IEQ Templo Gospel</title><meta name="viewport" content="width=device-width,initial-scale=1"/></Head>
-      <div style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.cream }}>
+      <style>{printStyles}</style>
+      <div className="print-area" style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.cream }}>
         <Header/>
         {!noP && <ProgressBar step={step} total={TOTAL}/>}
         <div style={{ padding:"14px 16px 48px" }}>{children}</div>
@@ -213,7 +267,7 @@ export default function App() {
     <div style={{ textAlign:"center", padding:"20px 0 16px" }}>
       <div style={{ fontSize:52, marginBottom:10 }}>🏠</div>
       <h1 style={{ color:C.navy, fontSize:24, fontWeight:800, margin:"0 0 8px", lineHeight:1.15 }}>Jornada Interativa do Casal</h1>
-      <p style={{ color:C.muted, fontSize:13, margin:0, lineHeight:1.5 }}>Cada um responde na sua vez. Ao final, vocês recebem uma análise personalizada com base nas respostas.</p>
+      <p style={{ color:C.muted, fontSize:13, margin:0, lineHeight:1.5 }}>Cada um responde na sua vez. Ao final, vocês recebem uma análise personalizada e um diagnóstico para guardar.</p>
     </div>
     <Card style={{ marginBottom:12 }}>
       <p style={{ fontSize:14, color:C.muted, fontStyle:"italic", textAlign:"center", margin:"0 0 4px", lineHeight:1.5 }}>«Quem ouve minhas palavras e as pratica é tão sábio como a pessoa que constrói sua casa sobre uma rocha firme.»</p>
@@ -287,6 +341,7 @@ export default function App() {
   if (step===3) {
     const la=LANGS.find(l=>l.id===data.a.lang), lb=LANGS.find(l=>l.id===data.b.lang);
     const same=data.a.lang===data.b.lang;
+    const ins=gerarInsights(na,nb,data);
     return wrap(<>
       <div style={{ marginBottom:12 }}><AlicerceTag idx={0}/><h2 style={{ color:C.teal, fontSize:21, fontWeight:800, margin:"8px 0" }}>Revelação — Ouvir</h2></div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
@@ -303,13 +358,16 @@ export default function App() {
           </Card>
         ))}
       </div>
-      <Card style={{ background:same?C.tealLt:C.navyLt, borderColor:same?C.teal:C.line, marginBottom:18 }}>
+      <Card style={{ background:same?C.tealLt:C.navyLt, borderColor:same?C.teal:C.line }}>
         <p style={{ fontWeight:700, fontSize:14, color:same?C.teal:C.navy, margin:"0 0 6px" }}>{same?"✨ Mesma linguagem!":"🔄 Linguagens diferentes"}</p>
         <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>
           {same?`${na} e ${nb} se sentem amados(as) da mesma forma. O desafio agora é exercê-la com intencionalidade.`:`${na} sente amor por ${la?.label?.toLowerCase()} e ${nb} por ${lb?.label?.toLowerCase()}. Conhecer isso é o primeiro passo para ouvir o outro da forma certa.`}
         </p>
       </Card>
-      <Btn color={C.teal} onClick={()=>goNext({to:na,color:C.olive,sub:"Alicerce 2 — sobre as práticas diárias do lar."})}>Continuar para o Alicerce 2 →</Btn>
+      <RochaBox idx={0} texto={ins.a1_rocha}/>
+      <div style={{ marginTop:18 }}>
+        <Btn color={C.teal} onClick={()=>goNext({to:na,color:C.olive,sub:"Alicerce 2 — sobre as práticas diárias do lar."})}>Continuar para o Alicerce 2 →</Btn>
+      </div>
     </>);
   }
 
@@ -362,9 +420,10 @@ export default function App() {
     const da=data.a.scores, db=data.b.scores;
     const avgs=PRACTICES.map((_,i)=>(da[i]+db[i])/2);
     const best=avgs.indexOf(Math.max(...avgs)), worst=avgs.indexOf(Math.min(...avgs));
+    const ins=gerarInsights(na,nb,data);
     return wrap(<>
       <div style={{ marginBottom:12 }}><AlicerceTag idx={1}/><h2 style={{ color:C.olive, fontSize:21, fontWeight:800, margin:"8px 0" }}>Revelação — Práticas</h2></div>
-      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:16 }}>
+      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:14 }}>
         {PRACTICES.map((pr,i)=>{
           const isBest=i===best, isWorst=i===worst;
           return (
@@ -387,7 +446,10 @@ export default function App() {
           );
         })}
       </div>
-      <Btn color={C.olive} onClick={()=>goNext({to:na,color:C.terra,sub:"Último alicerce — sobre como vocês enfrentam as provas do tempo."})}>Continuar para o Alicerce 3 →</Btn>
+      <RochaBox idx={1} texto={ins.a2_rocha}/>
+      <div style={{ marginTop:18 }}>
+        <Btn color={C.olive} onClick={()=>goNext({to:na,color:C.terra,sub:"Último alicerce — sobre como vocês enfrentam as provas do tempo."})}>Continuar para o Alicerce 3 →</Btn>
+      </div>
     </>);
   }
 
@@ -470,8 +532,9 @@ export default function App() {
           </Card>
         ))}
       </div>
+      {insights&&<RochaBox idx={2} texto={insights.a3_rocha}/>}
       {insights&&(
-        <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:18 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:14, marginBottom:18 }}>
           {[["a1_titulo","a1_corpo",0],["a2_titulo","a2_corpo",1],["a3_titulo","a3_corpo",2]].map(([tk,ck,idx])=>(
             <Card key={idx} style={{ borderLeft:`4px solid ${AC[idx]}` }}>
               <div style={{ marginBottom:6 }}><AlicerceTag idx={idx}/></div>
@@ -485,12 +548,61 @@ export default function App() {
           </Card>
         </div>
       )}
-      <Btn color={C.terra} onClick={()=>goNext(null)}>Escrever nossos compromissos →</Btn>
+      <Btn color={C.terra} onClick={()=>goNext(null)}>Ver diagnóstico geral →</Btn>
     </>);
   }
 
-  // S10 ── COMPROMISSOS
-  if (step===10) return wrap(<>
+  // S10 ── DIAGNÓSTICO GERAL
+  if (step===10) {
+    return wrap(<>
+      <div style={{ marginBottom:14, textAlign:"center" }}>
+        <div style={{ fontSize:11, letterSpacing:".2em", color:C.muted, textTransform:"uppercase", marginBottom:6 }}>Diagnóstico Geral</div>
+        <h2 style={{ color:C.navy, fontSize:24, fontWeight:800, margin:0 }}>O Alicerce de {na} & {nb}</h2>
+      </div>
+
+      {/* Medidor de solidez */}
+      <Card style={{ textAlign:"center", marginBottom:14, borderTop:`5px solid ${insights.nivelCor}` }}>
+        <div style={{ fontSize:48, fontWeight:800, color:insights.nivelCor, lineHeight:1 }}>{insights.solidez}%</div>
+        <div style={{ fontSize:11, color:C.muted, margin:"4px 0 12px", letterSpacing:".05em" }}>SOLIDEZ DO ALICERCE</div>
+        <div style={{ height:10, borderRadius:6, background:C.line, overflow:"hidden", marginBottom:12 }}>
+          <div style={{ height:"100%", borderRadius:6, background:insights.nivelCor, width:`${insights.solidez}%` }}/>
+        </div>
+        <div style={{ display:"inline-block", padding:"6px 16px", borderRadius:20, background:insights.nivelCor, color:"#fff", fontWeight:700, fontSize:14 }}>
+          {insights.nivel}
+        </div>
+        <p style={{ fontSize:13, color:C.ink, margin:"14px 0 0", lineHeight:1.5, textAlign:"left" }}>{insights.nivelDesc}</p>
+      </Card>
+
+      {/* Resumo dos 3 alicerces */}
+      <Card style={{ marginBottom:14 }}>
+        <p style={{ fontWeight:700, fontSize:14, color:C.navy, margin:"0 0 12px" }}>Os três alicerces do lar</p>
+        {[
+          { idx:0, val:insights.escutaMedia,      label:"Ouvir com Sensibilidade" },
+          { idx:1, val:insights.praticaMedia,     label:"Praticar as Bases Diárias" },
+          { idx:2, val:insights.resilienciaMedia, label:"Resistir às Provas do Tempo" },
+        ].map(({idx,val,label})=>(
+          <div key={idx} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:AC[idx], width:130, flexShrink:0 }}>{label}</span>
+            <div style={{ flex:1, height:10, borderRadius:5, background:C.line, overflow:"hidden" }}>
+              <div style={{ height:"100%", borderRadius:5, background:AC[idx], width:`${(val/5)*100}%` }}/>
+            </div>
+            <span style={{ fontSize:13, fontWeight:700, color:AC[idx], width:34, textAlign:"right", flexShrink:0 }}>{val.toFixed(1)}</span>
+          </div>
+        ))}
+      </Card>
+
+      {/* Ação da semana repetida no diagnóstico */}
+      <Card style={{ background:C.goldLt, borderColor:C.gold, marginBottom:18 }}>
+        <p style={{ fontWeight:700, fontSize:14, color:C.gold, margin:"0 0 6px" }}>🎯 Primeiro passo desta semana</p>
+        <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>{insights.acao_semana}</p>
+      </Card>
+
+      <Btn onClick={()=>goNext(null)}>Escrever nossos compromissos →</Btn>
+    </>);
+  }
+
+  // S11 ── COMPROMISSOS
+  if (step===11) return wrap(<>
     <div style={{ marginBottom:14 }}>
       <h2 style={{ color:C.navy, fontSize:22, fontWeight:800, margin:"0 0 6px" }}>Nossos Compromissos</h2>
       <p style={{ color:C.muted, fontSize:13, margin:0, lineHeight:1.4 }}>Escrevam juntos um compromisso por alicerce.</p>
@@ -508,38 +620,65 @@ export default function App() {
     <Btn onClick={()=>goNext(null)}>Selar os compromissos →</Btn>
   </>);
 
-  // S11 ── FINAL
-  if (step===11) return (
+  // S12 ── FINAL + IMPRIMIR
+  if (step===12) return (
     <>
       <Head><title>Família Inabalável · IEQ Templo Gospel</title></Head>
-      <div style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.navyDk, display:"flex", flexDirection:"column" }}>
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 24px 24px", textAlign:"center" }}>
-          <div style={{ fontSize:56, marginBottom:14 }}>🏠</div>
-          <div style={{ color:"rgba(255,255,255,.5)", fontSize:11, letterSpacing:".2em", textTransform:"uppercase", marginBottom:8 }}>Construído sobre a Rocha</div>
-          <h1 style={{ color:"#fff", fontSize:28, fontWeight:800, margin:"0 0 14px", lineHeight:1.15 }}>{na} & {nb}</h1>
-          <div style={{ display:"flex", width:180, height:5, borderRadius:3, overflow:"hidden", marginBottom:28 }}>
+      <style>{printStyles}</style>
+      <div className="print-area" style={{ maxWidth:460, margin:"0 auto", fontFamily:"system-ui,sans-serif", minHeight:"100vh", background:C.cream }}>
+        {/* Cabeçalho do relatório */}
+        <div style={{ background:C.navy, padding:"24px 24px 22px", textAlign:"center" }}>
+          <div style={{ fontSize:40, marginBottom:8 }}>🏠</div>
+          <div style={{ color:"#7FA0BC", fontSize:11, letterSpacing:".18em", textTransform:"uppercase", marginBottom:6 }}>Relatório do Casal</div>
+          <h1 style={{ color:"#fff", fontSize:26, fontWeight:800, margin:"0 0 10px", lineHeight:1.15 }}>{na} & {nb}</h1>
+          <div style={{ display:"flex", width:160, height:5, borderRadius:3, overflow:"hidden", margin:"0 auto" }}>
             {AC.map((c,i)=><div key={i} style={{ flex:1, background:c }}/>)}
           </div>
-          {insights?.fechamento&&(
-            <Card style={{ width:"100%", marginBottom:16, background:"rgba(255,255,255,.06)", borderColor:"rgba(255,255,255,.12)" }}>
-              <p style={{ fontSize:14, color:"rgba(255,255,255,.85)", fontStyle:"italic", margin:"0 0 8px", lineHeight:1.6, textAlign:"left" }}>{insights.fechamento}</p>
+        </div>
+
+        <div style={{ padding:"18px 16px 40px" }}>
+          {/* Selo de solidez */}
+          {insights && (
+            <Card style={{ textAlign:"center", marginBottom:14, borderTop:`5px solid ${insights.nivelCor}` }}>
+              <div style={{ display:"inline-block", padding:"6px 18px", borderRadius:20, background:insights.nivelCor, color:"#fff", fontWeight:700, fontSize:15, marginBottom:8 }}>
+                {insights.nivel} · {insights.solidez}%
+              </div>
+              <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>{insights.nivelDesc}</p>
+            </Card>
+          )}
+
+          {/* Versículo de fechamento */}
+          {insights?.fechamento && (
+            <Card style={{ marginBottom:14, background:C.navyLt, borderColor:C.navy }}>
+              <p style={{ fontSize:14, color:C.navy, fontStyle:"italic", margin:"0 0 8px", lineHeight:1.6 }}>{insights.fechamento}</p>
               <p style={{ fontSize:11, color:C.gold, margin:0, textAlign:"right", fontWeight:700 }}>Mateus 7:25</p>
             </Card>
           )}
-          {data.a.commits.some(c=>c)&&(
-            <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:8, marginBottom:24 }}>
-              {[0,1,2].map(i=>data.a.commits[i]?(
-                <div key={i} style={{ borderRadius:10, padding:"10px 14px", background:"rgba(255,255,255,.06)", borderLeft:`3px solid ${AC[i]}`, textAlign:"left" }}>
-                  <div style={{ fontSize:10, color:AC[i], fontWeight:700, marginBottom:4, letterSpacing:".08em", textTransform:"uppercase" }}>{AKICKERS[i]}</div>
-                  <div style={{ fontSize:13, color:"rgba(255,255,255,.8)", lineHeight:1.4 }}>{data.a.commits[i]}</div>
-                </div>
-              ):null)}
+
+          {/* Compromissos */}
+          {data.a.commits.some(c=>c) && (
+            <div style={{ marginBottom:14 }}>
+              <p style={{ fontWeight:700, fontSize:14, color:C.navy, margin:"0 0 10px" }}>📝 Nossos compromissos</p>
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {[0,1,2].map(i=>data.a.commits[i]?(
+                  <Card key={i} style={{ borderLeft:`4px solid ${AC[i]}`, padding:"12px 14px" }}>
+                    <div style={{ fontSize:10, color:AC[i], fontWeight:700, marginBottom:4, letterSpacing:".08em", textTransform:"uppercase" }}>{AKICKERS[i]}</div>
+                    <div style={{ fontSize:13, color:C.ink, lineHeight:1.4 }}>{data.a.commits[i]}</div>
+                  </Card>
+                ):null)}
+              </div>
             </div>
           )}
-          <p style={{ color:"rgba(255,255,255,.3)", fontSize:12, lineHeight:1.5, margin:0 }}>IEQ Templo Gospel · Culto da Família<br/>Baseado em Mateus 7:24-27</p>
-        </div>
-        <div style={{ padding:"0 24px 40px" }}>
-          <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""});}} style={{ width:"100%", padding:"14px", borderRadius:12, border:"2px solid rgba(255,255,255,.18)", background:"transparent", color:"rgba(255,255,255,.5)", fontSize:14, cursor:"pointer" }}>↩ Refazer com outro casal</button>
+
+          <p style={{ color:C.muted, fontSize:12, lineHeight:1.5, margin:"4px 0 20px", textAlign:"center" }}>
+            IEQ Templo Gospel · Especial dos Namorados<br/>Construindo uma Família Inabalável · Mateus 7:24-27
+          </p>
+
+          {/* Botões — escondidos na impressão */}
+          <div className="no-print" style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            <Btn color={C.olive} onClick={()=>window.print()}>🖨️ Imprimir / Salvar em PDF</Btn>
+            <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""});}} style={{ width:"100%", padding:"14px", borderRadius:12, border:`2px solid ${C.line}`, background:"transparent", color:C.muted, fontSize:14, cursor:"pointer", fontWeight:700 }}>↩ Refazer com outro casal</button>
+          </div>
         </div>
       </div>
     </>
