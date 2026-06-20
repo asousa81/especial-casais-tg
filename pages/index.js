@@ -43,6 +43,71 @@ const ANAMES   = ["Ouvir com Sensibilidade","Praticar as Bases Diárias","As Pro
 const AKICKERS = ["Alicerce 1 · Ouvir","Alicerce 2 · Praticar","Alicerce 3 · Resistir"];
 const emptyP   = () => ({ lang:null, listenScore:0, scores:[0,0,0,0,0], tempestade:null, response:null, commits:["","",""] });
 
+// ── GERADOR LOCAL DE INSIGHTS (sem API) ──────────────────────────────────────
+function gerarInsights(na, nb, data) {
+  const langA = LANGS.find(l => l.id === data.a.lang);
+  const langB = LANGS.find(l => l.id === data.b.lang);
+  const tempA = TEMPESTADES.find(t => t.id === data.a.tempestade);
+  const tempB = TEMPESTADES.find(t => t.id === data.b.tempestade);
+  const respA = RESPONSES.find(r => r.id === data.a.response);
+  const respB = RESPONSES.find(r => r.id === data.b.response);
+
+  const sameLang = data.a.lang === data.b.lang;
+  const avgScores = PRACTICES.map((_, i) => (data.a.scores[i] + data.b.scores[i]) / 2);
+  const bestIdx  = avgScores.indexOf(Math.max(...avgScores));
+  const worstIdx = avgScores.indexOf(Math.min(...avgScores));
+  const sameTemp = data.a.tempestade === data.b.tempestade;
+
+  // ── Alicerce 1
+  const a1_titulo = sameLang
+    ? "Uma linguagem em comum — um presente a cultivar"
+    : "Duas linguagens, uma oportunidade de conexão";
+  const a1_corpo = sameLang
+    ? `${na} e ${nb} compartilham a mesma linguagem de amor: ${langA?.label}. Isso é uma dádiva — vocês já falam a língua um do outro. O desafio agora é exercê-la com intencionalidade nos dias de rotina e cansaço, não apenas nos momentos especiais.`
+    : `${na} se sente amado(a) através de ${langA?.label?.toLowerCase()}, enquanto ${nb} se sente amado(a) através de ${langB?.label?.toLowerCase()}. O que é amor para um pode passar despercebido pelo outro. Agora que vocês sabem, podem amar de uma forma que o outro realmente recebe.`;
+
+  // ── Alicerce 2
+  const bestPractice  = PRACTICES[bestIdx];
+  const worstPractice = PRACTICES[worstIdx];
+  const a2_titulo = `Força em "${bestPractice.toLowerCase()}"`;
+  const a2_corpo  = `O ponto mais forte do casal é "${bestPractice.toLowerCase()}" — uma base sólida. A área que mais pede atenção é "${worstPractice.toLowerCase()}". Trabalhar essa prática juntos, com pequenos gestos diários, pode transformar o clima do lar ao longo do tempo.`;
+
+  // ── Alicerce 3
+  const a3_titulo = sameTemp
+    ? "Ambos reconhecem o mesmo tipo de desafio"
+    : "Percepções diferentes — força complementar";
+  const a3_corpo = sameTemp
+    ? `${na} e ${nb} identificam as mesmas tempestades: ${tempA?.label?.toLowerCase()}. O casal que nomeia seus desafios junto já está construindo sobre a rocha. A questão não é se a chuva virá, mas se o alicerce estará firme. E vocês já estão cuidando dele.`
+    : `${na} sente mais os desafios ${tempA?.label?.toLowerCase()} e ${nb} os ${tempB?.label?.toLowerCase()}. Essa diferença pode se tornar uma força — cada um alerta o outro para o que o outro talvez não veja chegar. Juntos, o campo de visão é maior.`;
+
+  // ── Ação da semana baseada na prática mais fraca
+  const acoes = [
+    `Esta semana, quando errar com o(a) cônjuge, seja o(a) primeiro(a) a pedir perdão — sem esperar que o outro venha primeiro.`,
+    `Esta semana, faça algo pelo lar ou pelo(a) cônjuge sem ser pedido e sem mencionar depois. O ato invisível é o que constrói.`,
+    `Esta semana, combinem uma palavra de sinal para quando um dos dois estiver no limite — e o outro se compromete a abaixar o tom naquele momento.`,
+    `Esta semana, quando surgir uma discussão, um dos dois deve dizer primeiro: "Não quero brigar com você. Quero resolver isso juntos."`,
+    `Esta semana, reservem 20 minutos sem telas, sem agenda, sem resolver problemas — só para estar junto e conversar.`,
+  ];
+  const acao_semana = acoes[worstIdx] || acoes[4];
+
+  // ── Fechamento
+  const fechamentos = {
+    r: `${na} e ${nb}, recuar é natural — mas a Rocha não se move. Que vocês encontrem em Cristo a coragem de permanecer um perto do outro mesmo quando o instinto é se distanciar.`,
+    c: `${na} e ${nb}, a intensidade que aparece nos conflitos é a mesma que pode mover montanhas quando direcionada para o mesmo lado. Que Cristo os ajude a transformar essa força em construção.`,
+    e: `${na} e ${nb}, buscar apoio é sabedoria — e a maior fonte de apoio é a Rocha Eterna. Que vocês encontrem em Cristo e um no outro o suporte que o lar precisa para permanecer de pé.`,
+    a: `${na} e ${nb}, o instinto de se aproximar nas tempestades é exatamente o que a Rocha pede. Continuem se voltando um para o outro — e para Cristo — quando o vento soprar forte.`,
+    j: `${na} e ${nb}, a resistência alegre que vocês demonstram é o sinal de um alicerce que já está sendo construído na Rocha. «...ela não cairá, pois foi construída sobre rocha firme.» — Mateus 7:25`,
+  };
+
+  // usa a resposta mais frequente entre os dois para o fechamento
+  const respId = data.a.response === data.b.response
+    ? data.a.response
+    : data.a.response || data.b.response;
+  const fechamento = fechamentos[respId] || `${na} e ${nb}, que Cristo, a Rocha Eterna, seja o fundamento de cada decisão do lar de vocês. Ele sustenta o que o vento mais forte não consegue derrubar. — Mateus 7:25`;
+
+  return { a1_titulo, a1_corpo, a2_titulo, a2_corpo, a3_titulo, a3_corpo, acao_semana, fechamento };
+}
+
 // ── UI ATOMS ─────────────────────────────────────────────────────────────────
 function AlicerceTag({ idx }) {
   return <span style={{ display:"inline-block", padding:"3px 10px", borderRadius:20, background:ACL[idx], color:AC[idx], fontSize:11, fontWeight:700, letterSpacing:".1em", textTransform:"uppercase" }}>{AKICKERS[idx]}</span>;
@@ -104,8 +169,6 @@ export default function App() {
   const [names,    setNames]    = useState({ a:"", b:"" });
   const [data,     setData]     = useState({ a:emptyP(), b:emptyP() });
   const [insights, setInsights] = useState(null);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState(null);
 
   const na = names.a || "Cônjuge A";
   const nb = names.b || "Cônjuge B";
@@ -118,36 +181,12 @@ export default function App() {
   const goNext = (pc) => { if(pc){setPass(pc);return;} setStep(s=>s+1); };
   const confirmPass = () => { setPass(null); setStep(s=>s+1); };
 
-  async function fetchInsights() {
-    setLoading(true); setStep(9); setError(null);
-    const ll = id => LANGS.find(l=>l.id===id)?.label||"—";
-    const tl = id => TEMPESTADES.find(t=>t.id===id)?.label||"—";
-    const rl = id => RESPONSES.find(r=>r.id===id)?.label||"—";
-    const prompt = `Você é um conselheiro cristão de casais com base na palestra Construindo uma Família Inabalável (Mateus 7:24-27). Retorne SOMENTE JSON válido, sem markdown.\n\nCASAL: ${na} e ${nb}\n\nALICERCE 1:\n- ${na}: linguagem="${ll(data.a.lang)}", escuta=${data.a.listenScore}/5\n- ${nb}: linguagem="${ll(data.b.lang)}", escuta=${data.b.listenScore}/5\n\nALICERCE 2:\n${PRACTICES.map((p,i)=>`- "${p}": ${na}=${data.a.scores[i]}, ${nb}=${data.b.scores[i]}`).join("\n")}\n\nALICERCE 3:\n- ${na}: tempestade="${tl(data.a.tempestade)}", resposta="${rl(data.a.response)}"\n- ${nb}: tempestade="${tl(data.b.tempestade)}", resposta="${rl(data.b.response)}"\n\nRetorne exatamente:\n{"a1_titulo":"...","a1_corpo":"2-3 frases com os nomes sobre linguagens de amor e escuta.","a2_titulo":"...","a2_corpo":"2-3 frases destacando força e área de crescimento.","a3_titulo":"...","a3_corpo":"2-3 frases sobre as provas conectando com Mateus 7.","acao_semana":"Uma ação concreta para essa semana.","fechamento":"Encorajamento final com base bíblica usando os nomes."}`;
-    try {
-      const res = await fetch("/api/insights", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1000, messages:[{role:"user",content:prompt}] })
-      });
-      const json = await res.json();
-      setInsights(JSON.parse((json.content?.[0]?.text||"").replace(/```json|```/g,"").trim()));
-    } catch(e) {
-      setInsights({
-        a1_titulo:"A conexão começa pela escuta",
-        a1_corpo:`${na} e ${nb}, conhecer a linguagem de amor um do outro é o primeiro passo. Ouvir para compreender — não para responder — é o mandamento de Tiago 1:19 posto em prática.`,
-        a2_titulo:"O trabalho invisível que sustenta tudo",
-        a2_corpo:"Toda família que permanece de pé escolheu, dia após dia, cavar mais fundo do que a conveniência exige. Humildade, misericórdia e pacificação não são sentimentos — são decisões.",
-        a3_titulo:"A chuva cai sobre as duas casas",
-        a3_corpo:"Jesus usa as mesmas palavras para descrever o que acontece com ambas. A diferença não está na ausência de tempestades, mas na firmeza do alicerce.",
-        acao_semana:"Reservem 20 minutos esta semana, sem telas, para cada um compartilhar uma coisa que está pesando — sem interromper, sem defender.",
-        fechamento:`Que Cristo, a Rocha Eterna, seja o fundamento de cada decisão do lar de ${na} e ${nb}.`
-      });
-      setError("Insight padrão (verifique a chave de API nas configurações do Vercel).");
-    }
-    setLoading(false);
+  function concluirAlicerce3() {
+    const resultado = gerarInsights(na, nb, data);
+    setInsights(resultado);
+    setStep(9);
   }
 
-  // ── PASSAGEM ──────────────────────────────────────────────────────────────
   if (pass) return (
     <div style={{ minHeight:"100vh", background:pass.color, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32, fontFamily:"system-ui,sans-serif" }}>
       <div style={{ width:80, height:80, borderRadius:"50%", background:"rgba(255,255,255,.18)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:40, marginBottom:24 }}>📱</div>
@@ -174,7 +213,7 @@ export default function App() {
     <div style={{ textAlign:"center", padding:"20px 0 16px" }}>
       <div style={{ fontSize:52, marginBottom:10 }}>🏠</div>
       <h1 style={{ color:C.navy, fontSize:24, fontWeight:800, margin:"0 0 8px", lineHeight:1.15 }}>Jornada Interativa do Casal</h1>
-      <p style={{ color:C.muted, fontSize:13, margin:0, lineHeight:1.5 }}>Cada um responde na sua vez. Ao final, a IA gera uma análise personalizada para vocês dois.</p>
+      <p style={{ color:C.muted, fontSize:13, margin:0, lineHeight:1.5 }}>Cada um responde na sua vez. Ao final, vocês recebem uma análise personalizada com base nas respostas.</p>
     </div>
     <Card style={{ marginBottom:12 }}>
       <p style={{ fontSize:14, color:C.muted, fontStyle:"italic", textAlign:"center", margin:"0 0 4px", lineHeight:1.5 }}>«Quem ouve minhas palavras e as pratica é tão sábio como a pessoa que constrói sua casa sobre uma rocha firme.»</p>
@@ -267,7 +306,7 @@ export default function App() {
       <Card style={{ background:same?C.tealLt:C.navyLt, borderColor:same?C.teal:C.line, marginBottom:18 }}>
         <p style={{ fontWeight:700, fontSize:14, color:same?C.teal:C.navy, margin:"0 0 6px" }}>{same?"✨ Mesma linguagem!":"🔄 Linguagens diferentes"}</p>
         <p style={{ fontSize:13, color:C.ink, margin:0, lineHeight:1.5 }}>
-          {same?`${na} e ${nb} se sentem amados(as) da mesma forma. O desafio agora é exercê-la com intencionalidade.`:`${na} sente amor por ${la?.label?.toLowerCase()} e ${nb} por ${lb?.label?.toLowerCase()}. Conhecer isso é o primeiro passo para ouvir o outro da forma que realmente importa.`}
+          {same?`${na} e ${nb} se sentem amados(as) da mesma forma. O desafio agora é exercê-la com intencionalidade.`:`${na} sente amor por ${la?.label?.toLowerCase()} e ${nb} por ${lb?.label?.toLowerCase()}. Conhecer isso é o primeiro passo para ouvir o outro da forma certa.`}
         </p>
       </Card>
       <Btn color={C.teal} onClick={()=>goNext({to:na,color:C.olive,sub:"Alicerce 2 — sobre as práticas diárias do lar."})}>Continuar para o Alicerce 2 →</Btn>
@@ -410,19 +449,12 @@ export default function App() {
           {RESPONSES.map(r=><OptionPill key={r.id} label={r.label} selected={d.response===r.id} onSelect={()=>setP("b","response",r.id)} color={C.terra}/>)}
         </div>
       </Card>
-      <Btn color={C.terra} onClick={()=>{ if(ok) fetchInsights(); }} disabled={!ok}>{ok?"Gerar análise do casal →":"Responda tudo para continuar"}</Btn>
+      <Btn color={C.terra} onClick={()=>{ if(ok) concluirAlicerce3(); }} disabled={!ok}>{ok?"Ver análise do casal →":"Responda tudo para continuar"}</Btn>
     </>);
   }
 
-  // S9 ── LOADING / RESULTADOS
+  // S9 ── REVELAÇÃO 3 + ANÁLISE
   if (step===9) {
-    if (loading) return wrap(
-      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"65vh", gap:20, textAlign:"center" }}>
-        <div style={{ width:60, height:60, borderRadius:"50%", border:`4px solid ${C.line}`, borderTopColor:C.gold, animation:"spin 1s linear infinite" }}/>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-        <p style={{ color:C.muted, fontSize:14, margin:0 }}>Analisando as respostas de {na} e {nb}…</p>
-      </div>, true
-    );
     const ta=TEMPESTADES.find(t=>t.id===data.a.tempestade), tb=TEMPESTADES.find(t=>t.id===data.b.tempestade);
     const ra=RESPONSES.find(r=>r.id===data.a.response), rb=RESPONSES.find(r=>r.id===data.b.response);
     return wrap(<>
@@ -438,7 +470,6 @@ export default function App() {
           </Card>
         ))}
       </div>
-      {error&&<div style={{ background:C.terraLt, border:`1px solid ${C.terra}`, borderRadius:10, padding:"10px 14px", marginBottom:12, fontSize:12, color:C.terra }}>{error}</div>}
       {insights&&(
         <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:18 }}>
           {[["a1_titulo","a1_corpo",0],["a2_titulo","a2_corpo",1],["a3_titulo","a3_corpo",2]].map(([tk,ck,idx])=>(
@@ -508,7 +539,7 @@ export default function App() {
           <p style={{ color:"rgba(255,255,255,.3)", fontSize:12, lineHeight:1.5, margin:0 }}>IEQ Templo Gospel · Culto da Família<br/>Baseado em Mateus 7:24-27</p>
         </div>
         <div style={{ padding:"0 24px 40px" }}>
-          <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""}); }} style={{ width:"100%", padding:"14px", borderRadius:12, border:"2px solid rgba(255,255,255,.18)", background:"transparent", color:"rgba(255,255,255,.5)", fontSize:14, cursor:"pointer" }}>↩ Refazer com outro casal</button>
+          <button onClick={()=>{setStep(0);setData({a:emptyP(),b:emptyP()});setInsights(null);setNames({a:"",b:""});}} style={{ width:"100%", padding:"14px", borderRadius:12, border:"2px solid rgba(255,255,255,.18)", background:"transparent", color:"rgba(255,255,255,.5)", fontSize:14, cursor:"pointer" }}>↩ Refazer com outro casal</button>
         </div>
       </div>
     </>
